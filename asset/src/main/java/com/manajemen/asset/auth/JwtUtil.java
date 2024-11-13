@@ -22,11 +22,12 @@ public class JwtUtil implements Serializable {
     @Value("${jwt.expiration}")
     private long EXPIRE_DURATION;
 
-    public String generateAccessToken(Authentication authentication) {
+    public String generateAccessToken(Authentication authentication, Long userId) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim("userId", userId) // Tambahkan userId sebagai klaim
                 .setIssuer("Polstat")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRE_DURATION * 1000))
@@ -63,4 +64,10 @@ public class JwtUtil implements Serializable {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    public Long extractUserId(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("userId", Long.class);
+    }
+
 }

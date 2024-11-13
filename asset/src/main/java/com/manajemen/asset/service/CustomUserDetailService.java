@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.manajemen.asset.entity.CustomUserDetails;
 import com.manajemen.asset.entity.User;
 import com.manajemen.asset.repository.UserRepository;
 
@@ -20,10 +21,6 @@ public class CustomUserDetailService implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException("User not found with username:" + email);
         }
-        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .build();
-        return userDetails;
+        return new CustomUserDetails(user);
     }
 }

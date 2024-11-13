@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.manajemen.asset.dto.ChangePasswordRequest;
 import com.manajemen.asset.dto.UserDto;
+import com.manajemen.asset.entity.CustomUserDetails;
 import com.manajemen.asset.entity.User;
 import com.manajemen.asset.service.UserService;
 
@@ -49,7 +51,9 @@ public class AuthController {
         try {
             Authentication authentication = authManager
                     .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-            String accessToken = jwtUtil.generateAccessToken(authentication);
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long userId = userDetails.getUserId(); // Dapatkan userId dari CustomUserDetails
+            String accessToken = jwtUtil.generateAccessToken(authentication, userId);
             AuthResponse response = new AuthResponse(request.getEmail(), accessToken);
             return ResponseEntity.ok().body(response);
         } catch (BadCredentialsException ex) {
@@ -74,7 +78,13 @@ public class AuthController {
             @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
     })
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getUserProfile(@PathVariable Long userId) {
+    public ResponseEntity<UserDto> getUserProfile(@PathVariable Long userId,
+            @RequestHeader("Authorization") String token) {
+        String jwtToken = token.substring(7); // Hapus "Bearer " dari awal token
+        Long userIdFromToken = jwtUtil.extractUserId(jwtToken);
+        if (!userId.equals(userIdFromToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
         UserDto userProfile = userService.getUserProfile(userId);
         return ResponseEntity.ok(userProfile);
     }
@@ -85,7 +95,13 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid input data", content = @Content)
     })
     @PutMapping("/{userId}")
-    public ResponseEntity<User> updateUserProfile(@PathVariable Long userId, @RequestBody UserDto userDto) {
+    public ResponseEntity<User> updateUserProfile(@PathVariable Long userId, @RequestBody UserDto userDto,
+            @RequestHeader("Authorization") String token) {
+        String jwtToken = token.substring(7); // Hapus "Bearer " dari awal token
+        Long userIdFromToken = jwtUtil.extractUserId(jwtToken);
+        if (!userId.equals(userIdFromToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
         User updatedUser = userService.updateUserProfile(userId, userDto);
         return ResponseEntity.ok(updatedUser);
     }
@@ -97,7 +113,12 @@ public class AuthController {
     })
     @PostMapping("/{userId}/change-password")
     public ResponseEntity<String> changePassword(@PathVariable Long userId,
-            @RequestBody ChangePasswordRequest passwordRequest) {
+            @RequestBody ChangePasswordRequest passwordRequest, @RequestHeader("Authorization") String token) {
+        String jwtToken = token.substring(7); // Hapus "Bearer " dari awal token
+        Long userIdFromToken = jwtUtil.extractUserId(jwtToken);
+        if (!userId.equals(userIdFromToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
         boolean isChanged = userService.changePassword(userId, passwordRequest);
         if (isChanged) {
             return ResponseEntity.ok("Password changed successfully");
@@ -112,7 +133,13 @@ public class AuthController {
             @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
     })
     @DeleteMapping("/{userId}")
-    public ResponseEntity<String> deleteUserById(@PathVariable Long userId) {
+    public ResponseEntity<String> deleteUserById(@PathVariable Long userId,
+            @RequestHeader("Authorization") String token) {
+        String jwtToken = token.substring(7); // Hapus "Bearer " dari awal token
+        Long userIdFromToken = jwtUtil.extractUserId(jwtToken);
+        if (!userId.equals(userIdFromToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
         userService.deleteUserById(userId);
         return ResponseEntity.ok("User deleted successfully");
     }
