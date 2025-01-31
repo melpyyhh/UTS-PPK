@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/assets")
@@ -111,4 +113,11 @@ public class AssetController {
         Maintenance newMaintenance = assetService.addMaintenance(id, maintenance);
         return ResponseEntity.ok(newMaintenance);
     }
+
+    @GetMapping("/{id}/maintenance")
+    public ResponseEntity<List<Maintenance>> getMaintenanceByAssetId(@PathVariable Long id) {
+        List<Maintenance> maintenances = assetService.getMaintenance(id);
+        return new ResponseEntity<>(maintenances, HttpStatus.OK);
+    }
+
 }

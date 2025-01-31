@@ -69,6 +69,10 @@ public class AssetService {
         return maintenanceRepository.save(maintenance);
     }
 
+    public List<Maintenance> getMaintenance(Long assetId) {
+        return maintenanceRepository.findByAssetId(assetId);
+    }
+
     public List<Asset> findAssetsByPlaceId(Long placeid) {
         return assetRepository.findByPlaceId(placeid);
     }
